@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: abele_postgres
+    environment:
+      - POSTGRES_DB=abele_test
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+    networks:
+      - abele-network
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d abele_test" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+  backend:
+    build:
+      context: .
+    container_name: abele_backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "9000:9000"
+    networks:
+      - abele-network
+
+networks:
+  abele-network:
+    driver: bridge
