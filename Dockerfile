@@ -25,9 +25,6 @@ RUN pipenv install
 # Copy the application code into the container
 COPY app app
 
-# Copy the .env file into the container
-COPY .env ./
-
 # Set the environment variable
 ENV PYTHONPATH=/app
 
