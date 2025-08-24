@@ -133,6 +133,17 @@ def map_to_joined_uploaded_template_and_user_list(
     return result
 
 
+def map_to_joined_uploaded_user_template_list(
+    records: Sequence[Row[tuple[UploadedTemplate, User, UserTemplate]]],
+) -> list[GetJoinedUploadedUserTemplate]:
+    result = []
+    for record in records:
+        uploaded_template, user, _ = record
+        records = map_to_joined_uploaded_template_and_user(uploaded_template, user)
+        result.append(records)
+    return result
+
+
 def map_to_user(
     record: User
 ) -> GetUser:

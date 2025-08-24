@@ -49,14 +49,20 @@ async def get_user_template_by_id(
 async def filter_user_template(
     db: AsyncSession,
     request: FilterUserTemplate
-) -> tuple[Sequence[Row[tuple[UploadedTemplate, User]]], Metadata]:
-    template_cond = User.id == UploadedTemplate.owner_id
-    template_cond2 = UserTemplate.user_id == User.id
-    query = (select(UploadedTemplate, User).join(User, template_cond).join(UserTemplate, template_cond2))
-    count_query = select(func.count(UploadedTemplate.id)).join(User, template_cond).join(UserTemplate, template_cond2)
+) -> tuple[Sequence[Row[tuple[UploadedTemplate, User, UserTemplate]]], Metadata]:
+    query = (
+        select(UploadedTemplate, User, UserTemplate)
+        .join(User, UploadedTemplate.owner_id == User.id)  # UploadedTemplate → User
+        .join(UserTemplate, UserTemplate.template_id == UploadedTemplate.id)  # User → UserTemplate
+        .where(UserTemplate.user_id == request.userId)
+    )
 
-    query = query.where(UserTemplate.user_id == request.userId)
-    count_query = count_query.where(UserTemplate.user_id == request.userId)
+    count_query = (
+        select(func.count(UploadedTemplate.id))
+        .join(User, UploadedTemplate.owner_id == User.id)  # UploadedTemplate → User
+        .join(UserTemplate, UserTemplate.template_id == UploadedTemplate.id)  # User → UserTemplate
+        .where(UserTemplate.user_id == request.userId)
+    )
 
     if request.templateId:
         query = query.where(UserTemplate.template_id == request.templateId)
@@ -70,7 +76,7 @@ async def filter_user_template(
     total_pages = math.ceil(total / size)
 
     offset = (page - 1) * size
-    query = query.offset(offset).limit(size).order_by(desc(UserTemplate.created_on))
+    query = query.offset(offset).limit(size).order_by(desc(UploadedTemplate.created_on))
     result = await db.execute(query)
 
     metadata = Metadata(page=page, results=size, totalPages=total_pages)

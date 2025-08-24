@@ -9,7 +9,8 @@ from app.schema.uploaded_template import APIResponseMetadata
 from app.schema.user_template import CreateUserTemplate, APIResponse, FilterUserTemplate
 from app.schema.wallet import FilterWallet
 from app.user.exceptions.custom_exceptions import DatabaseException
-from app.utils.mappers import map_to_user_template, map_to_joined_uploaded_template_and_user_list
+from app.utils.mappers import map_to_user_template, map_to_joined_uploaded_template_and_user_list, \
+    map_to_joined_uploaded_user_template_list
 from app.user.repo.user_template import create_user_template, filter_user_template
 from app.user.services.uploaded_template import TemplateUploadService
 from app.user.services.user import UserService
@@ -94,7 +95,7 @@ class UserTemplateService:
         templates_found = True if templates and len(templates) > 0 else False
 
         logger.info(f"{self.session} - User template(s) found ? {templates_found}")
-        mapped_uploaded_templates = map_to_joined_uploaded_template_and_user_list(templates) if templates_found else []
+        mapped_uploaded_templates = map_to_joined_uploaded_user_template_list(templates) if templates_found else []
 
         return APIResponseMetadata(data=mapped_uploaded_templates, metadata=metadata, traceId=self.session)
 
