@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -44,7 +45,21 @@ async def list_user_templates(
     return response
 
 
+@user_template_router.delete("/{user_id}/template/{user_template_id}")
+async def delete_user_template(
+    user_id: uuid.UUID,
+    user_template_id: uuid.UUID,
+    session_id: str = Depends(generate_uuid_str),
+    db: AsyncSession = Depends(get_db_session)
+) -> APIResponse:
+    logger.info(f"{session_id} - Request received from user {user_id} to delete template using id : {user_template_id}")
 
+    user_template_svc = UserTemplateService(db, session_id)
+    response = await user_template_svc.delete_user_template(user_template_id)
+
+    logger.info(f"{session_id} - Response : {response}")
+
+    return response
 
 
 

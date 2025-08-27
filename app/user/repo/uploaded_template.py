@@ -2,7 +2,7 @@ import uuid
 from typing import Sequence
 
 import math
-from sqlalchemy import select, desc, func, Row
+from sqlalchemy import select, desc, func, Row, exists
 from sqlalchemy.exc import OperationalError, DataError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +11,7 @@ from app.schema.uploaded_template import CreateUploadedTemplate, FilterUploadedT
 from app.user.exceptions.custom_exceptions import DatabaseException
 from app.user.models.uploaded_template import UploadedTemplate
 from app.user.models.user import User
+from app.user.models.user_template import UserTemplate
 from app.utils.utils import generate_uuid, build_base_query
 
 
@@ -83,6 +84,14 @@ async def filter_uploaded_template(
     if request.ownerId:
         query = query.where(UploadedTemplate.owner_id == request.ownerId)
         count_query = count_query.where(UploadedTemplate.owner_id == request.ownerId)
+    if request.userId:
+        subq = (
+            select(UserTemplate.id)
+            .where(UserTemplate.template_id == UploadedTemplate.id)
+            .where(UserTemplate.user_id == request.userId)
+        )
+        query = query.where(~exists(subq))
+        count_query = count_query.where(~exists(subq))
     if request.tier:
         query = query.where(UploadedTemplate.tier == request.tier)
         count_query = count_query.where(UploadedTemplate.tier == request.tier)

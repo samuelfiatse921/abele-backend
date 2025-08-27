@@ -67,6 +67,7 @@ class FilterUploadedTemplate(BaseModel):
     page: int = 1
     size: int = 20
     ownerId: Optional[uuid.UUID] = None
+    userId: Optional[uuid.UUID] = None
     tier: Optional[TemplateTier] = None
     category: Optional[TemplateCategory] = None
     under: Optional[TemplateUnder] = None

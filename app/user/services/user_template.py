@@ -9,9 +9,8 @@ from app.schema.uploaded_template import APIResponseMetadata
 from app.schema.user_template import CreateUserTemplate, APIResponse, FilterUserTemplate
 from app.schema.wallet import FilterWallet
 from app.user.exceptions.custom_exceptions import DatabaseException
-from app.utils.mappers import map_to_user_template, map_to_joined_uploaded_template_and_user_list, \
-    map_to_joined_uploaded_user_template_list
-from app.user.repo.user_template import create_user_template, filter_user_template
+from app.utils.mappers import map_to_user_template, map_to_joined_uploaded_user_template_list
+from app.user.repo.user_template import create_user_template, filter_user_template, delete_user_template
 from app.user.services.uploaded_template import TemplateUploadService
 from app.user.services.user import UserService
 from app.user.services.wallet import WalletService
@@ -98,4 +97,15 @@ class UserTemplateService:
         mapped_uploaded_templates = map_to_joined_uploaded_user_template_list(templates) if templates_found else []
 
         return APIResponseMetadata(data=mapped_uploaded_templates, metadata=metadata, traceId=self.session)
+
+    async def delete_user_template(self, record_id: uuid.UUID) -> APIResponse:
+        logger.info(f"{self.session} - Deleting template using id : {record_id}")
+
+        deleted_template = await delete_user_template(self.db, record_id)
+
+        if not deleted_template:
+            raise http_exp(status_code=404, session=self.session, code="01", msg="User template not found")
+
+        logger.info(f"{self.session} - User template deleted")
+        return APIResponse(data=[map_to_user_template(deleted_template)], traceId=self.session)
 

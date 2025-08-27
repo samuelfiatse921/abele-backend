@@ -84,6 +84,16 @@ async def filter_user_template(
     return result.all(), metadata
 
 
+async def delete_user_template(
+    db: AsyncSession,
+    record_id: uuid.UUID,
+) -> UserTemplate:
+    db_user_template = await get_user_template_by_id(db, record_id)
 
+    if db_user_template:
+        await db.delete(db_user_template)
+        await db.commit()
+
+    return db_user_template
 
 
