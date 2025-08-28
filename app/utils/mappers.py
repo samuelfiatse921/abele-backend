@@ -2,6 +2,7 @@ from typing import Sequence
 
 from sqlalchemy import Row
 
+from app.schema.deployment import GetDeployment
 from app.schema.following import GetFollowing
 from app.schema.uploaded_template import GetJoinedUploadedUserTemplate, TemplateFiles, GetUploadedTemplate
 from app.schema.user import GetUser, GetName, GetLocation, GetStreet, GetCoordinates, GetDate, GetRegistered, GetID, \
@@ -10,6 +11,7 @@ from app.schema.user_template import GetUserTemplate
 from app.schema.wallet import GetWallet
 from app.user.models import Payment
 from app.schema.payment import GetPayment
+from app.user.models.deployment import Deployment
 from app.user.models.following import Following
 from app.user.models.uploaded_template import UploadedTemplate
 from app.user.models.user import User
@@ -251,3 +253,31 @@ def map_to_user_credentials(
         email=record.email,
         hashed_password=record.hashed_password
     )
+
+
+def map_to_deployment(
+    record: Deployment
+) -> GetDeployment:
+    return GetDeployment(
+        id=record.id,
+        name=record.name,
+        deploymentSupportCost=record.deployment_support_cost,
+        deploymentSupportDescription=record.deployment_support_description,
+        domainSupportCost=record.domain_support_cost,
+        domainSupportDescription=record.domain_support_description,
+        createdOn=record.created_on,
+        updatedOn=record.updated_on
+    )
+
+
+def map_to_deployment_list(
+    records: Sequence[Deployment],
+) -> list[GetDeployment]:
+    result = []
+    for record in records:
+        records = map_to_deployment(record)
+        result.append(records)
+    return result
+
+
+

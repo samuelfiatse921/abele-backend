@@ -12,6 +12,7 @@ from fastapi.exceptions import HTTPException as FastAPIHTTPException
 from app.deps.auth.deps import get_current_user
 from app.deps.db.db import initialize_db
 from app.user.web.v1.authenticate import auth_router
+from app.user.web.v1.deployment import deployment_router
 from app.user.web.v1.following import following_router
 from app.user.web.v1.payment import payment_router
 from app.user.web.v1.uploaded_template import template_upload_router
@@ -97,6 +98,10 @@ app.include_router(
 app.include_router(
     wallet_router, prefix="/api/v1/wallet", tags=["wallet"], dependencies=[authenticate]
 )
+app.include_router(
+    deployment_router, prefix="/api/v1/deployment", tags=["deployment"], dependencies=[authenticate]
+)
+
 
 # Main entry point
 if __name__ == "__main__":

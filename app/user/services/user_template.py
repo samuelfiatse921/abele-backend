@@ -9,6 +9,7 @@ from app.schema.uploaded_template import APIResponseMetadata
 from app.schema.user_template import CreateUserTemplate, APIResponse, FilterUserTemplate
 from app.schema.wallet import FilterWallet
 from app.user.exceptions.custom_exceptions import DatabaseException
+from app.user.services.deployment import DeploymentService
 from app.utils.mappers import map_to_user_template, map_to_joined_uploaded_user_template_list
 from app.user.repo.user_template import create_user_template, filter_user_template, delete_user_template
 from app.user.services.uploaded_template import TemplateUploadService
@@ -34,7 +35,7 @@ class UserTemplateService:
         await self.user_svc.get_one_user(user_id)
         logger.info(f"{self.session} - User record found")
 
-        template_cost = await self.__check_template_access_eligibility(user_id, payload.templateId)
+        template_cost = await self.__check_template_access_eligibility(user_id, payload.templateId, payload.deploymentId)
         logger.info(f"{self.session} - User passed eligibility check. Creating user template")
 
         try:
@@ -46,16 +47,33 @@ class UserTemplateService:
 
         logger.info(f"{self.session} - User template record created")
 
-        asyncio.create_task(self.debit_user_wallet(user_id, template_cost))
+        asyncio.create_task(self.debit_user_wallet(user_id, payload.deploymentId, template_cost))
 
         return APIResponse(data=[map_to_user_template(new_user_template)], traceId=self.session)
 
-    async def debit_user_wallet(self, user_id: uuid.UUID, amount: float):
+    async def debit_user_wallet(self, user_id: uuid.UUID, deployment_id: uuid.UUID, amount: float):
         async with session_maker() as db:
+            total_cost = await self.compute_deployment_cost(db, deployment_id)
+            amount += total_cost
             wallet_svc = WalletService(db, self.session)
             await wallet_svc.debit_wallet(user_id=user_id, amount=amount)
 
-    async def __check_template_access_eligibility(self, user_id: uuid.UUID, template_id: uuid.UUID) -> float:
+    async def compute_deployment_cost(self, db, deployment_id):
+        deployment_svc = DeploymentService(db, self.session)
+        deployment_result = await deployment_svc.get_one_deployment(deployment_id)
+
+        deployment_data = deployment_result.data[0]
+        deployment_cost = deployment_data.deploymentSupportCost
+
+        domain_cost = deployment_data.domainSupportCost
+        return deployment_cost + domain_cost
+
+    async def __check_template_access_eligibility(
+        self,
+        user_id: uuid.UUID,
+        template_id: uuid.UUID,
+        deployment_id: uuid.UUID
+    ) -> float:
         logger.info(f"{self.session} - Getting wallet details using user id : {user_id}")
         wallet_details = await self.wallet_svc.list_wallets(request=FilterWallet(userId=user_id))
 
@@ -75,11 +93,15 @@ class UserTemplateService:
 
         template_cost = template_details.data[0].price
         wallet_balance = wallet_details.data[0].balance
+        total_deployment_cost = await self.compute_deployment_cost(self.db, deployment_id)
 
         is_template_free = template_details.data[0].tier == TemplateTier.FREE
         logger.info(f"{self.session} - Is template free ? {is_template_free}")
 
-        user_has_enough_balance = is_template_free or (wallet_balance - template_cost) >= 0
+        total_debit_amount = total_deployment_cost + template_cost
+        logger.info(f"{self.session} - Total amount to debit(template cost + deployment cost) is {total_debit_amount}")
+
+        user_has_enough_balance = is_template_free or (wallet_balance - total_debit_amount) >= 0
         logger.info(f"{self.session} - Does user have enough funds in wallet ? {user_has_enough_balance}")
 
         if not user_has_enough_balance:

@@ -12,7 +12,7 @@ class UploadedTemplate(Base):
     __tablename__ = "tblUploadedTemplates"
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     owner_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False, unique=False, index=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     coin: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
     image: Mapped[str] = mapped_column(String(100), nullable=False)

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class CreateUserTemplate(BaseModel):
     templateId: uuid.UUID
     userId: uuid.UUID
+    deploymentId: uuid.UUID
 
 
 class GetUserTemplate(BaseModel):
