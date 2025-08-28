@@ -36,12 +36,12 @@ async def create_user_template(
     return db_user_template
 
 
-async def get_user_template_by_id(
+async def get_by_template_id(
     db: AsyncSession,
     record_id: uuid.UUID
 ) -> UserTemplate:
     query = build_base_query(UserTemplate)
-    query = query.filter(UserTemplate.id == record_id)
+    query = query.filter(UserTemplate.template_id == record_id)
     record_found = await db.execute(query)
 
     return record_found.scalars().first()
@@ -106,7 +106,7 @@ async def delete_user_template(
     db: AsyncSession,
     record_id: uuid.UUID,
 ) -> UserTemplate:
-    db_user_template = await get_user_template_by_id(db, record_id)
+    db_user_template = await get_by_template_id(db, record_id)
 
     if db_user_template:
         await db.delete(db_user_template)
