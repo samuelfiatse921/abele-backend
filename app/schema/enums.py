@@ -41,7 +41,10 @@ class TemplateCategory(Enum):
     INFOGRAPHICS = "infographics"
 
 
-
+class OrderByOptions(Enum):
+    NAME = "name"
+    CREATED_ON = "created_on"
+    UPDATED_ON = "updated_on"
 
 
 

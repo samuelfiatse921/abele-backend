@@ -6,6 +6,7 @@ from sqlalchemy import select, desc, func, Row
 from sqlalchemy.exc import OperationalError, DataError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.schema.enums import OrderByOptions
 from app.schema.uploaded_template import Metadata
 from app.schema.user_template import CreateUserTemplate, FilterUserTemplate
 from app.user.exceptions.custom_exceptions import DatabaseException
@@ -68,6 +69,10 @@ async def filter_user_template(
         query = query.where(UserTemplate.template_id == request.templateId)
         count_query = count_query.where(UserTemplate.template_id == request.templateId)
 
+    if request.name:
+        query = query.filter(UploadedTemplate.name.ilike(f"%{request.name}%"))
+        count_query = count_query.filter(UploadedTemplate.name.ilike(f"%{request.name}%"))
+
     size = request.size
     page = request.page
 
@@ -76,12 +81,25 @@ async def filter_user_template(
     total_pages = math.ceil(total / size)
 
     offset = (page - 1) * size
-    query = query.offset(offset).limit(size).order_by(desc(UploadedTemplate.created_on))
+
+    query = query.order_by(desc(sort_by(request.orderBy))).offset(offset).limit(size)
     result = await db.execute(query)
 
     metadata = Metadata(page=page, results=size, totalPages=total_pages)
 
     return result.all(), metadata
+
+
+def sort_by(request_order: OrderByOptions):
+    order_by = OrderByOptions.CREATED_ON
+    if request_order == OrderByOptions.CREATED_ON:
+        order_by = UserTemplate.created_on
+    elif request_order == OrderByOptions.UPDATED_ON:
+        order_by = UserTemplate.updated_on
+    elif request_order == OrderByOptions.NAME:
+        order_by = UploadedTemplate.name
+
+    return order_by
 
 
 async def delete_user_template(

@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from app.schema.enums import OrderByOptions
+
 
 class CreateUserTemplate(BaseModel):
     templateId: uuid.UUID
@@ -25,6 +27,8 @@ class FilterUserTemplate(BaseModel):
     userId: uuid.UUID
     templateId: Optional[uuid.UUID] = None
     paymentId: Optional[uuid.UUID] = None
+    name: Optional[str] = None
+    orderBy: Optional[OrderByOptions] = OrderByOptions.CREATED_ON
 
 
 class Metadata(BaseModel):
