@@ -35,7 +35,7 @@ class UserTemplateService:
         await self.user_svc.get_one_user(user_id)
         logger.info(f"{self.session} - User record found")
 
-        template_cost = await self.__check_template_access_eligibility(user_id, payload.templateId, payload.deploymentId)
+        total_cost = await self.__check_template_access_eligibility(user_id, payload)
         logger.info(f"{self.session} - User passed eligibility check. Creating user template")
 
         try:
@@ -47,14 +47,12 @@ class UserTemplateService:
 
         logger.info(f"{self.session} - User template record created")
 
-        asyncio.create_task(self.debit_user_wallet(user_id, payload.deploymentId, template_cost))
+        asyncio.create_task(self.debit_user_wallet(user_id, total_cost))
 
         return APIResponse(data=[map_to_user_template(new_user_template)], traceId=self.session)
 
-    async def debit_user_wallet(self, user_id: uuid.UUID, deployment_id: uuid.UUID, amount: float):
+    async def debit_user_wallet(self, user_id: uuid.UUID, amount: float):
         async with session_maker() as db:
-            total_cost = await self.compute_deployment_cost(db, deployment_id)
-            amount += total_cost
             wallet_svc = WalletService(db, self.session)
             await wallet_svc.debit_wallet(user_id=user_id, amount=amount)
 
@@ -68,12 +66,7 @@ class UserTemplateService:
         domain_cost = deployment_data.domainSupportCost
         return deployment_cost + domain_cost
 
-    async def __check_template_access_eligibility(
-        self,
-        user_id: uuid.UUID,
-        template_id: uuid.UUID,
-        deployment_id: uuid.UUID
-    ) -> float:
+    async def __check_template_access_eligibility(self, user_id: uuid.UUID, payload: CreateUserTemplate) -> float:
         logger.info(f"{self.session} - Getting wallet details using user id : {user_id}")
         wallet_details = await self.wallet_svc.list_wallets(request=FilterWallet(userId=user_id))
 
@@ -83,6 +76,7 @@ class UserTemplateService:
         if not wallet_found:
             raise http_exp(404, code="01", session=self.session, msg="No wallet found for user")
 
+        template_id = payload.templateId
         logger.info(f"{self.session} - Getting template details using template id : {template_id}")
         template_details = await self.uploaded_template_svc.get_one_uploaded_template(template_id)
         template_found = template_details is not None
@@ -91,23 +85,30 @@ class UserTemplateService:
         if not template_found:
             raise http_exp(404, code="01", session=self.session, msg="No template found")
 
-        template_cost = template_details.data[0].price
-        wallet_balance = wallet_details.data[0].balance
-        total_deployment_cost = await self.compute_deployment_cost(self.db, deployment_id)
-
         is_template_free = template_details.data[0].tier == TemplateTier.FREE
         logger.info(f"{self.session} - Is template free ? {is_template_free}")
 
-        total_debit_amount = total_deployment_cost + template_cost
-        logger.info(f"{self.session} - Total amount to debit(template cost + deployment cost) is {total_debit_amount}")
+        total_debit_amount = 0
+        template_cost = template_details.data[0].price
+        wallet_balance = wallet_details.data[0].balance
 
-        user_has_enough_balance = is_template_free or (wallet_balance - total_debit_amount) >= 0
+        if not is_template_free:
+            total_debit_amount = await self.__check_available_funds(payload.deploymentId, template_cost, wallet_balance)
+
+        return total_debit_amount
+
+    async def __check_available_funds(self, deployment_id, template_cost, wallet_balance):
+        total_deployment_cost = await self.compute_deployment_cost(self.db, deployment_id)
+        total_debit_amount = total_deployment_cost + template_cost
+
+        logger.info(f"{self.session} - Total amount to debit(template cost + deployment cost) is {total_debit_amount}")
+        user_has_enough_balance = (wallet_balance - total_debit_amount) >= 0
         logger.info(f"{self.session} - Does user have enough funds in wallet ? {user_has_enough_balance}")
 
         if not user_has_enough_balance:
             raise http_exp(400, code="01", session=self.session, msg="Wallet doesn't have enough funds")
 
-        return template_cost
+        return total_debit_amount
 
     async def list_user_templates(self, payload: FilterUserTemplate) -> APIResponseMetadata:
         logger.info(f"{self.session} - Filtering user(s) using params : {payload}")

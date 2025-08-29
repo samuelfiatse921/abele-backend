@@ -10,7 +10,7 @@ from app.schema.enums import OrderByOptions
 class CreateUserTemplate(BaseModel):
     templateId: uuid.UUID
     userId: uuid.UUID
-    deploymentId: uuid.UUID
+    deploymentId: Optional[uuid.UUID] = None
 
 
 class GetUserTemplate(BaseModel):
