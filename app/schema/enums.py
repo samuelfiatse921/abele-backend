@@ -34,7 +34,7 @@ class TemplateCategory(Enum):
     ECOMMERCE = "e-commerce"
     EDUCATION = "education"
     HEALTH_FITNESS = "health-fitness"
-    NON_PROFIT_CHARITY = "Non Profit & Charity"
+    NON_PROFIT_CHARITY = "charity"
     REAL_ESTATE = "real-estate"
     FINANCE = "finance"
     PERSONAL_DEVELOPMENT = "personal-development"

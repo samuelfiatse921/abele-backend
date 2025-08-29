@@ -81,6 +81,9 @@ async def filter_uploaded_template(
 ) -> tuple[Sequence[Row[tuple[UploadedTemplate, User]]], Metadata]:
     query, count_query = build_join_query()
 
+    if request.name:
+        query = query.filter(UploadedTemplate.name.ilike(f"%{request.name}%"))
+        count_query = count_query.filter(UploadedTemplate.name.ilike(f"%{request.name}%"))
     if request.ownerId:
         query = query.where(UploadedTemplate.owner_id == request.ownerId)
         count_query = count_query.where(UploadedTemplate.owner_id == request.ownerId)
