@@ -14,6 +14,7 @@ from app.deps.db.db import initialize_db
 from app.user.web.v1.authenticate import auth_router
 from app.user.web.v1.deployment import deployment_router
 from app.user.web.v1.following import following_router
+from app.user.web.v1.grapejs_project import grape_js_router
 from app.user.web.v1.payment import payment_router
 from app.user.web.v1.uploaded_template import template_upload_router
 from app.user.web.v1.user import user_router
@@ -93,7 +94,7 @@ app.include_router(
     user_router, prefix="/api/v1/user", tags=["user"]
 )
 app.include_router(
-    user_template_router, prefix="/api/v1/user/template", tags=["user-template"], dependencies=[authenticate]
+    user_template_router, prefix="/api/v1/user/template", tags=["user-template"]
 )
 app.include_router(
     wallet_router, prefix="/api/v1/wallet", tags=["wallet"], dependencies=[authenticate]
@@ -101,7 +102,9 @@ app.include_router(
 app.include_router(
     deployment_router, prefix="/api/v1/deployment", tags=["deployment"], dependencies=[authenticate]
 )
-
+app.include_router(
+    grape_js_router, prefix="/api/v1/grape-js", tags=["grape-js"]
+)
 
 # Main entry point
 if __name__ == "__main__":

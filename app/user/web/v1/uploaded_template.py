@@ -53,7 +53,6 @@ async def list_uploaded_templates(
     filter_query: Annotated[FilterUploadedTemplate, Query()],
     session_id: str = Depends(generate_uuid_str),
     db: AsyncSession = Depends(get_db_session),
-    authenticated_user: GetUserCredentials = Depends(get_current_user)
 ) -> APIResponseMetadata:
     logger.info(f"{session_id} - Filtering uploaded template(s) using payload : {filter_query}")
 
