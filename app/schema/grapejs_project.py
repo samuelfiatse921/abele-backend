@@ -5,19 +5,27 @@ from pydantic import BaseModel, Field
 
 
 class CreateProject(BaseModel):
-    id: uuid.UUID
-    data: dict
+    userId: uuid.UUID
+    templateId: uuid.UUID
+    data: list
 
 
 class GetProject(BaseModel):
     id: uuid.UUID
-    data: dict
+    userId: uuid.UUID
+    templateId: uuid.UUID
+    data: list
     createdOn: datetime.datetime
     updatedOn: datetime.datetime
 
 
 class UpdateProject(BaseModel):
-    data: dict
+    data: list
+
+
+class FilterProject(BaseModel):
+    user_id: uuid.UUID
+    template_id: uuid.UUID
 
 
 class APIResponse(BaseModel):

@@ -2,7 +2,7 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schema.grapejs_project import CreateProject, APIResponse
+from app.schema.grapejs_project import CreateProject, APIResponse, FilterProject
 from app.user.exceptions.custom_exceptions import DatabaseException
 from app.user.repo.grapejs_project import create_or_update_project, get_project_by_id
 from app.utils.mappers import map_to_grape_js_project
@@ -28,10 +28,10 @@ class GrapeJSService:
 
         return APIResponse(data=[map_to_grape_js_project(new_record)], traceId=self.session)
 
-    async def get_one_grape_js_project(self, project_id: uuid.UUID) -> APIResponse:
-        logger.info(f"{self.session} - Handling request to get grape-js project using id : {project_id}")
+    async def get_one_grape_js_project(self, request: FilterProject) -> APIResponse:
+        logger.info(f"{self.session} - Handling request to get grape-js project using filter : {request}")
 
-        project = await get_project_by_id(self.db, project_id)
+        project = await get_project_by_id(self.db, request)
         if not project:
             raise http_exp(status_code=404, session=self.session, code="01", exp="No project found")
 

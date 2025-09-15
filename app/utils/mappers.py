@@ -287,6 +287,8 @@ def map_to_grape_js_project(
 ) -> GetProject:
     return GetProject(
         id=record.id,
+        userId=record.user_id,
+        templateId=record.template_id,
         data=record.data,
         createdOn=record.created_on,
         updatedOn=record.updated_on

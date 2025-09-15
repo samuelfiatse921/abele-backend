@@ -1,26 +1,30 @@
-import uuid
-
+from sqlalchemy import and_
 from sqlalchemy.exc import OperationalError, DataError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schema.grapejs_project import CreateProject
+from app.schema.grapejs_project import CreateProject, FilterProject
 from app.user.exceptions.custom_exceptions import DatabaseException
 from app.user.models.grapejs_project import GrapeJSProject
-from app.utils.utils import build_base_query
+from app.utils.utils import build_base_query, generate_uuid
 
 
 async def create_or_update_project(
     db: AsyncSession,
     payload: CreateProject
 ) -> GrapeJSProject:
-    project_id = payload.id
-    db_project = await get_project_by_id(db, project_id)
+    template_id = payload.templateId
+    user_id = payload.userId
+
+    filter_project = FilterProject(user_id=user_id, template_id=template_id)
+    db_project = await get_project_by_id(db, filter_project)
 
     if db_project:
         db_project.data = payload.data
     else:
         db_project = GrapeJSProject(
-            id=project_id,
+            id=generate_uuid(),
+            user_id=user_id,
+            template_id=template_id,
             data=payload.data
         )
         db.add(db_project)
@@ -36,10 +40,15 @@ async def create_or_update_project(
 
 async def get_project_by_id(
     db: AsyncSession,
-    record_id: uuid.UUID
+    request: FilterProject
 ) -> GrapeJSProject:
     query = build_base_query(GrapeJSProject)
-    query = query.filter(GrapeJSProject.id == record_id)
+    query = query.where(
+        and_(
+            GrapeJSProject.user_id == request.user_id,
+            GrapeJSProject.template_id == request.template_id
+        )
+    )
     record_found = await db.execute(query)
 
     return record_found.scalars().first()
