@@ -121,10 +121,10 @@ class UserTemplateService:
 
         return APIResponseMetadata(data=mapped_uploaded_templates, metadata=metadata, traceId=self.session)
 
-    async def delete_user_template(self, record_id: uuid.UUID) -> APIResponse:
+    async def delete_user_template(self, record_id: uuid.UUID, user_id: uuid.UUID) -> APIResponse:
         logger.info(f"{self.session} - Deleting template using id : {record_id}")
 
-        deleted_template = await delete_user_template(self.db, record_id)
+        deleted_template = await delete_user_template(self.db, record_id, user_id)
 
         if not deleted_template:
             raise http_exp(status_code=404, session=self.session, code="01", msg="User template not found")

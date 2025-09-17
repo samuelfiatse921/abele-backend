@@ -2,7 +2,7 @@ import uuid
 from typing import Sequence
 
 import math
-from sqlalchemy import select, desc, func, Row
+from sqlalchemy import select, desc, func, Row, and_
 from sqlalchemy.exc import OperationalError, DataError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,10 +38,16 @@ async def create_user_template(
 
 async def get_by_template_id(
     db: AsyncSession,
-    record_id: uuid.UUID
+    record_id: uuid.UUID,
+    user_id: uuid.UUID
 ) -> UserTemplate:
     query = build_base_query(UserTemplate)
-    query = query.filter(UserTemplate.template_id == record_id)
+    query = query.where(
+        and_(
+            UserTemplate.template_id == record_id,
+            UserTemplate.user_id == user_id
+        )
+    )
     record_found = await db.execute(query)
 
     return record_found.scalars().first()
@@ -105,8 +111,9 @@ def sort_by(request_order: OrderByOptions):
 async def delete_user_template(
     db: AsyncSession,
     record_id: uuid.UUID,
+    user_id: uuid.UUID
 ) -> UserTemplate:
-    db_user_template = await get_by_template_id(db, record_id)
+    db_user_template = await get_by_template_id(db, record_id, user_id)
 
     if db_user_template:
         await db.delete(db_user_template)

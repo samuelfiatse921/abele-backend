@@ -2,7 +2,7 @@ from sqlalchemy import and_
 from sqlalchemy.exc import OperationalError, DataError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schema.grapejs_project import CreateProject, FilterProject
+from app.schema.grapejs_project import CreateProject, FilterProject, DeleteProject
 from app.user.exceptions.custom_exceptions import DatabaseException
 from app.user.models.grapejs_project import GrapeJSProject
 from app.utils.utils import build_base_query, generate_uuid
@@ -54,5 +54,16 @@ async def get_project_by_id(
     return record_found.scalars().first()
 
 
+async def delete_project(
+    db: AsyncSession,
+    request: DeleteProject
+) -> GrapeJSProject:
+    filter_request = FilterProject(user_id=request.user_id, template_id=request.template_id)
+    db_user_template = await get_project_by_id(db, filter_request)
 
+    if db_user_template:
+        await db.delete(db_user_template)
+        await db.commit()
+
+    return db_user_template
 

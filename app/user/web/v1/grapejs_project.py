@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps.db.db import get_db_session
-from app.schema.grapejs_project import CreateProject, APIResponse, FilterProject
+from app.schema.grapejs_project import CreateProject, APIResponse, FilterProject, DeleteProject
 from app.user.services.grapejs_project import GrapeJSService
 from app.utils.utils import generate_uuid_str, logger
 
@@ -44,3 +44,17 @@ async def get_single_project(
     return response
 
 
+@grape_js_router.delete("")
+async def delete_project(
+    request: DeleteProject,
+    session_id: str = Depends(generate_uuid_str),
+    db: AsyncSession = Depends(get_db_session)
+) -> APIResponse:
+    logger.info(f"{session_id} - Request received to delete grape-js project : {request}")
+
+    svc = GrapeJSService(db, session_id)
+    response = await svc.delete_grape_js_project(request)
+
+    logger.info(f"{session_id} - Response : {response}")
+
+    return response

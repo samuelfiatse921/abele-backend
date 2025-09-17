@@ -28,6 +28,11 @@ class FilterProject(BaseModel):
     template_id: uuid.UUID
 
 
+class DeleteProject(BaseModel):
+    user_id: uuid.UUID
+    template_id: uuid.UUID
+
+
 class APIResponse(BaseModel):
     code: str = "00"
     message: str = "Success"

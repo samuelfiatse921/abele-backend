@@ -54,12 +54,12 @@ async def delete_user_template(
     template_id: uuid.UUID,
     session_id: str = Depends(generate_uuid_str),
     db: AsyncSession = Depends(get_db_session),
-    authenticated_user: GetUserCredentials = Depends(get_current_user)
+    # authenticated_user: GetUserCredentials = Depends(get_current_user)
 ) -> APIResponse:
     logger.info(f"{session_id} - Request received from user {user_id} to delete template using id : {template_id}")
 
     user_template_svc = UserTemplateService(db, session_id)
-    response = await user_template_svc.delete_user_template(template_id)
+    response = await user_template_svc.delete_user_template(template_id, user_id)
 
     logger.info(f"{session_id} - Response : {response}")
 

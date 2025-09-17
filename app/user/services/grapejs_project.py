@@ -2,9 +2,9 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schema.grapejs_project import CreateProject, APIResponse, FilterProject
+from app.schema.grapejs_project import CreateProject, APIResponse, FilterProject, DeleteProject
 from app.user.exceptions.custom_exceptions import DatabaseException
-from app.user.repo.grapejs_project import create_or_update_project, get_project_by_id
+from app.user.repo.grapejs_project import create_or_update_project, get_project_by_id, delete_project
 from app.utils.mappers import map_to_grape_js_project
 from app.utils.utils import http_exp, logger
 
@@ -38,4 +38,16 @@ class GrapeJSService:
         logger.info(f"{self.session} - Project found")
 
         return APIResponse(data=[map_to_grape_js_project(project)], traceId=self.session)
+
+    async def delete_grape_js_project(self, request: DeleteProject) -> APIResponse:
+        logger.info(f"{self.session} - Deleting project using request : {request}")
+
+        deleted_project = await delete_project(self.db, request)
+
+        if not deleted_project:
+            raise http_exp(status_code=404, session=self.session, code="01", msg="Project not found")
+
+        logger.info(f"{self.session} - Project deleted")
+        return APIResponse(data=[map_to_grape_js_project(deleted_project)], traceId=self.session)
+
 
