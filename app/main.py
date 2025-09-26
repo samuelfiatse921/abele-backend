@@ -1,16 +1,19 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 from urllib.request import Request
 
 from fastapi import FastAPI, APIRouter, Depends, Request as FastAPIRequest
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.responses import Response
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException as FastAPIHTTPException
 
 from app.deps.auth.deps import get_current_user
 from app.deps.db.db import initialize_db
+from app.user.web.v1.asset_upload import asset_upload_router
 from app.user.web.v1.authenticate import auth_router
 from app.user.web.v1.deployment import deployment_router
 from app.user.web.v1.following import following_router
@@ -19,6 +22,7 @@ from app.user.web.v1.payment import payment_router
 from app.user.web.v1.uploaded_template import template_upload_router
 from app.user.web.v1.user import user_router
 from app.user.web.v1.user_template import user_template_router
+from app.user.web.v1.versel import vercel_router
 from app.user.web.v1.wallet import wallet_router
 
 
@@ -42,6 +46,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
 
 # Initialize the FastAPI app
 app = FastAPI(lifespan=lifespan)
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+upload_folder = os.path.join(BASE_DIR, "uploads")
+os.makedirs(upload_folder, exist_ok=True)
+
+# Mount the uploads folder
+app.mount("/app/uploads", StaticFiles(directory=upload_folder), name="uploads")
 
 
 @app.exception_handler(FastAPIHTTPException)
@@ -104,6 +115,12 @@ app.include_router(
 )
 app.include_router(
     grape_js_router, prefix="/api/v1/grape-js", tags=["grape-js"]
+)
+app.include_router(
+    asset_upload_router, prefix="/api/v1/asset", tags=["asset"]
+)
+app.include_router(
+    vercel_router, prefix="/api/v1/vercel/deployment", tags=["vercel-deployment"]
 )
 
 # Main entry point

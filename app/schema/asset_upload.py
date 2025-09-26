@@ -5,40 +5,30 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class CreateProject(BaseModel):
+class CreateAsset(BaseModel):
     userId: uuid.UUID
-    templateId: uuid.UUID
-    data: list
+    fileName: str
+    filePath: str
 
 
-class GetProject(BaseModel):
+class GetAsset(BaseModel):
     id: uuid.UUID
-    userId: uuid.UUID
-    templateId: uuid.UUID
-    data: list
+    fileName: str
+    filePath: str
     createdOn: datetime.datetime
-    updatedOn: datetime.datetime
 
 
-class UpdateProject(BaseModel):
-    data: list
-
-
-class FilterProject(BaseModel):
+class FilterAsset(BaseModel):
+    page: int = 1
+    size: int = 20
+    asset_name: Optional[str] = None
     user_id: uuid.UUID
-    template_id: uuid.UUID
-    page: Optional[str] = None
-
-
-class DeleteProject(BaseModel):
-    user_id: uuid.UUID
-    template_id: uuid.UUID
 
 
 class APIResponse(BaseModel):
     code: str = "00"
     message: str = "Success"
-    data: list[GetProject] = []
+    data: list[GetAsset] = []
     systemMessage: str = ""
     systemCode: str = ""
     traceId: str
@@ -51,3 +41,12 @@ class Metadata(BaseModel):
     totalPages: int
     version: str = "1.0"
 
+
+class APIResponseMetadata(BaseModel):
+    code: str = "00"
+    message: str = "Success"
+    data: list[GetAsset] = []
+    metadata: Metadata
+    systemMessage: str = ""
+    systemCode: str = ""
+    traceId: str

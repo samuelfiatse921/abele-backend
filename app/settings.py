@@ -7,6 +7,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "9wVlFPJtS4jSn4Foe2NmSlWVtdfEeLq3"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    UPLOAD_FOLDER: str = "uploads"
+    ALLOWED_EXTENSIONS: str = ""
+    MAX_FILE_SIZE_MB: str = ""
+    VERCEL_API: str = ""
+    VERCEL_TOKEN: str = ""
     BRAINTREE_MERCHANT_ID: str = ""
     BRAINTREE_PUBLIC_KEY: str = ""
     BRAINTREE_PRIVATE_KEY: str = ""

@@ -5,9 +5,8 @@ from fastapi.encoders import jsonable_encoder
 from httpx import Timeout
 from pydantic import BaseModel
 
-from app.main import logger
 from app.settings import settings
-from app.utils.utils import http_exp
+from app.utils.utils import http_exp, logger
 
 
 class HTTPRequest(BaseModel):
@@ -49,7 +48,7 @@ async def initiate_http_request(session: str, contact: HTTPRequest):
         raise http_exp(500, session=session, exp="Read timeout occurred")
     except httpx.HTTPStatusError as e:
         logger.error(f"{session} - Request failed : {e}", exc_info=True)
-        raise http_exp(response.status_code, session=session, exp="Read timeout occurred")
+        raise http_exp(response.status_code, session=session, exp="Client error occurred")
     except Exception as e:
         logger.error(f"{session} - Exception occurred while initiating request : {e}", exc_info=True)
         raise http_exp(500, session=session, exp="Unknown exception occurred")
@@ -61,6 +60,7 @@ async def initiate_http_request(session: str, contact: HTTPRequest):
     if not content_type_accepted:
         raise http_exp(500, session=session, exp="Unexpected response content type received")
 
+    vendor_response = response.json()
     logger.info(f"{session} - Response received is {vendor_response}")
 
-    return response.json()
+    return vendor_response

@@ -1,4 +1,6 @@
-from sqlalchemy import and_
+from typing import Sequence
+
+from sqlalchemy import text, bindparam, func, and_
 from sqlalchemy.exc import OperationalError, DataError
 from sqlalchemy.ext.asyncio import AsyncSession
 

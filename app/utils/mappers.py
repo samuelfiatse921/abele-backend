@@ -5,6 +5,7 @@ from sqlalchemy import Row
 from app.schema.deployment import GetDeployment
 from app.schema.following import GetFollowing
 from app.schema.grapejs_project import GetProject
+from app.schema.asset_upload import GetAsset
 from app.schema.uploaded_template import GetJoinedUploadedUserTemplate, TemplateFiles, GetUploadedTemplate
 from app.schema.user import GetUser, GetName, GetLocation, GetStreet, GetCoordinates, GetDate, GetRegistered, GetID, \
     GetPicture, GetUserCredentials
@@ -15,6 +16,7 @@ from app.schema.payment import GetPayment
 from app.user.models.deployment import Deployment
 from app.user.models.following import Following
 from app.user.models.grapejs_project import GrapeJSProject
+from app.user.models.asset_upload import UploadedAsset
 from app.user.models.uploaded_template import UploadedTemplate
 from app.user.models.user import User
 from app.user.models.user_template import UserTemplate
@@ -294,5 +296,25 @@ def map_to_grape_js_project(
         updatedOn=record.updated_on
     )
 
+
+def map_to_uploaded_asset(
+    record: UploadedAsset
+) -> GetAsset:
+    return GetAsset(
+        id=record.id,
+        fileName=record.file_name,
+        filePath=record.file_path,
+        createdOn=record.created_on
+    )
+
+
+def map_to_uploaded_asset_list(
+    records: Sequence[UploadedAsset],
+) -> list[GetAsset]:
+    result = []
+    for record in records:
+        records = map_to_uploaded_asset(record)
+        result.append(records)
+    return result
 
 
