@@ -30,7 +30,6 @@ class ProjectSettings(BaseModel):
 class CreateVercelDeployment(BaseModel):
     name: str
     files: list[VercelProject]
-    target: str = "staging"
     public: bool = True
     projectSettings: ProjectSettings = ProjectSettings()
 

@@ -7,7 +7,7 @@ from app.schema.versel import DeploySingleFile, DeployEntireProject, VercelProje
     CreateVercelDeployment, APIResponse
 from app.user.integration.versel import deploy_project
 from app.user.services.grapejs_project import GrapeJSService
-from app.utils.utils import logger
+from app.utils.utils import logger, generate_uuid
 
 
 class VercelService:
@@ -44,7 +44,9 @@ class VercelService:
 
         logger.info("Preparing project deployment")
         vercel_project = self.build_versel_project(page_name, template)
-        template_name = f"{request.templateName.lower()}-{page_name.lower()}".replace(" ", "")
+
+        project_id = str(generate_uuid())
+        template_name = project_id[0:len(project_id)-1]
         deployment_url = await self.run_deployment(template_name, [vercel_project])
 
         full_deployment_url = f"{deployment_url}/{vercel_project.file}"
@@ -66,11 +68,11 @@ class VercelService:
             if project_name:
                 page_name = project_name
                 template = self.build_template(page_name, project)
-
                 vercel_project = self.build_versel_project(page_name, template)
                 files.append(vercel_project)
 
-        template_name = request.templateName.lower().replace(" ", "")
+        project_id = str(generate_uuid())
+        template_name = project_id[0:len(project_id) - 1]
         deployment_url = await self.run_deployment(template_name, files)
 
         return APIResponse(data=[deployment_url], traceId=self.session)
