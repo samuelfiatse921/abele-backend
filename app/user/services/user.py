@@ -4,12 +4,15 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps.db.db import session_maker
+from app.schema.asset_upload import CreateAsset
 from app.schema.braintree import Customer
 from app.schema.user import CreateUser, APIResponse, FilterUser, APIResponseMetadata, UpdateUser, GetUserCredentials
 from app.schema.wallet import CreateWallet
+from app.settings import settings
 from app.user.exceptions.custom_exceptions import DatabaseException
 from app.user.integration.braintree import create_customer
 from app.user.models.user import User
+from app.user.repo.asset_upload import create_asset
 from app.utils.mappers import map_to_user, map_to_user_list, map_to_user_credentials
 from app.user.repo.user import create_user, get_user_by_id, filter_users, update_user_by_id, get_user_by_phone_number, \
     get_user_by_email, get_user_by_username
@@ -30,6 +33,7 @@ class UserService:
         try:
             new_user = await create_user(self.db, payload)
             asyncio.create_task(self.create_wallet(new_user))
+            asyncio.create_task(self.create_default_assets(new_user))
             asyncio.create_task(self.create_braintree_customer(new_user))
         except DatabaseException as exp:
             raise http_exp(500, session=self.session, exp=str(exp))
@@ -39,6 +43,15 @@ class UserService:
         logger.info(f"{self.session} - New user created")
 
         return APIResponse(data=[map_to_user(new_user)], traceId=self.session)
+
+    async def create_default_assets(self, new_user):
+        async with session_maker() as db:
+            default_assets = settings.DEFAULT_IMAGES_LIST
+            for default_asset in default_assets:
+                asset = CreateAsset(
+                    userId=new_user.id, fileName=default_asset.get("fileName"), filePath=default_asset.get("filePath")
+                )
+                await create_asset(db, asset)
 
     async def create_wallet(self, new_user):
         async with session_maker() as db:
